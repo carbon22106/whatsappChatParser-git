@@ -1,22 +1,28 @@
-import os, argparse
+import os, argparse, shutil   
 from os.path import join
 
 parser = argparse.ArgumentParser(description="A simple tool to extract all images from a whatsapp chat export and rename it to numbers in order to make processing the images through another tool easier.")
 parser.add_argument("directory", type=str, help="Path to the exported chat folder. ONLY enter the root of the extracted directory DO NOT go any deeper or the code wont work.")
-parser.add_argument("keyword", type=str, default='', help="The word you put after every of the image you want. eg - advance, gas, food etc.")
+parser.add_argument("keyword", type=str, default="", help="The word you put after every of the image you want. eg - advance, gas, food etc.")
 parser.add_argument("-s", "--start", type=int, default=0, help="Starting Date in format YYYYMMDD")
 parser.add_argument("-e", "--end", type=int, default=20500000, help="Ending Date in format YYYYMMDD")
-parser.add_argument("-f", "--full-parse", action='store_true', help="A flag to tell the script to run a full parse - from moving the images to only leaving the image you want.")
+parser.add_argument("-c", "--copy", action="store_true", help="Tell the script to copy the images rather than moving them. All the images will still be moved to the 'Images' directory but copyed to the final output 'keyword' directory.")
+parser.add_argument("-m", "--move", action="store_true", help="Tell the script to move the images rather than copying them.")
+parser.add_argument("-f", "--full-parse", action='store_true', help="Run a full parse - from moving the images to only leaving the image you want.")
 args = parser.parse_args()
 
 main_directory = args.directory
 image_directory = join(args.directory, 'Images')
-keyword_directory = join(args.directory, 'Images', args.keyword)
-removed_image_directory = join(args.directory, 'Images', 'Removed_images')
+keyword_directory = join(args.directory, 'Images', args.keyword.lower() + '-' + str(args.start) + '-' + str(args.end))
 keyword = args.keyword.lower()
 start_date = str(args.start)
 end_date = str(args.end)
 full_parse = args.full_parse
+if not args.copy and not args.move:
+    args.copy = True
+if args.copy and args.move:
+    print("You can only either move the images or copy them, not both at the same time.")
+    KeyboardInterrupt
 
 date = []
 imageDir_set = ()
@@ -24,7 +30,7 @@ image_names = []
 final_image_list = []
 
 def move_images():
-    if not os.path.isdir(image_directory) and main_directory[-6:] != 'Images':
+    if not os.path.isdir(image_directory):
         os.mkdir(image_directory)
     item_list = os.listdir(main_directory)
     for item in item_list:
@@ -44,7 +50,7 @@ def parse_chat():
                 continue
             
     # if os.path.isfile(join(main_directory, 'chat.temp')) == False:
-    print("Making chat.temp...\n")
+    # print("Making chat.temp...\n")
     with open(join(main_directory, 'chat.txt'), 'r+', encoding='utf-8') as chat:
         chat_temp = open(join(main_directory, 'chat.temp'), 'w', encoding='utf-8')
         for line in chat:
@@ -71,18 +77,20 @@ def parse_chat():
 
 def remove_out_of_range():
     imageDir_set = set(os.listdir(image_directory))
-    if os.path.isdir(removed_image_directory):
-        imageDir_set.remove("Removed_images")
-    if os.path.isdir(removed_image_directory) == False:
-        os.makedirs(removed_image_directory)
-        
+    if os.path.isdir(keyword_directory):
+        imageDir_set.remove(args.keyword.lower() + '-' + str(args.start) + '-' + str(args.end))
+    else:
+        os.makedirs(keyword_directory)
     for image in imageDir_set:
         if image in final_image_list:
+            # print("MOVE : ", image, final_image_list)
+            if args.move:
+                os.rename(join(image_directory, image), join(keyword_directory, image))
+            if args.copy:
+                shutil.copyfile(join(image_directory, image), join(keyword_directory, image))
+        else:
             # print("KEEP : ", image, final_image_list)
             continue
-        else:
-            # print("MOVE : ", image, final_image_list)
-            os.rename(join(image_directory, image), join(removed_image_directory, image))
 
 if full_parse:
     move_images()

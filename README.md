@@ -49,6 +49,8 @@ python whatsapp_parser.py <directory> <keyword> [options]
 | -------------------- | -------------------------------- |
 | `-s`, `--start`      | Start date in format `YYYYMMDD`  |
 | `-e`, `--end`        | End date in format `YYYYMMDD`    |
+| `-c`, `--copy`       | Copy the final images            |
+| `-m`, `--move`       | Move the final images            |
 | `-f`, `--full-parse` | Run the complete parsing process |
 
 ## Examples
@@ -97,6 +99,7 @@ Images/
 
 ## Future Plans
 
+* Adding verbose feature
 * OCR support for reading payment amounts
 * Automatic calculation of totals
 * CSV/Excel export
